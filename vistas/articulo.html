@@ -6,5 +6,32 @@
 </head>
 <body>
     <h1>Articulo</h1>
+    
+    {% if actualizado != "true" %}
+    {% else %}
+        <p>El artículo fue modificado correctamente.</p>
+    {% endif %}
+    
+    {% if articuloPrincipal != null %}
+        <h2>{{articuloPrincipal.titulo}}</h2>
+        <p>{{articuloPrincipal.contenido}}</p>
+        <form action="/articulo/{{articuloPrincipal.id}}/editar" method="get">
+            <input type="submit" value="Editar">
+        </form>
+        <p>FECHA: {{articuloPrincipal.fecha_creacion}}</p>
+        <p>USUARIO: {{articuloPrincipal.usuario.nombre}}</p>
+        <p>Categorias:
+            {% for categoria in articuloPrincipal.categorias %}
+                {{categoria.nombre}}&nbsp;
+            {% endfor %}
+        </p>
+        <ul>           
+            {% for comentario in articuloPrincipal.comentarios %}
+                <li>{{comentario.comentario}}</li>
+            {% endfor %}
+        </ul>
+    {%else%}
+        <h2>No existe el artículo.</h2>
+    {% endif %}
 </body>
 </html>

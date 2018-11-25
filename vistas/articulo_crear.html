@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Blog</title>
+</head>
+<body>
+    <h1>Creador de artículos</h1>
+    <form action="/crear-articulo" method="post">
+        <input name="id" type="hidden" value="">
+        <input name="usuario_id" type="hidden" value="">
+        <div>
+            Titulo: <input type="text" name="titulo" value="">
+        </div>
+        <div>
+            Contenido: <textarea name="contenido" id="" cols="30"  rows="10"></textarea>
+        </div>
+        <input type="submit" value="Crear">
+    </form>
+</body>
+</html>

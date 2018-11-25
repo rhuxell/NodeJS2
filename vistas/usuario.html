@@ -6,5 +6,13 @@
 </head>
 <body>
     <h1>Usuario</h1>
+    <p>Nombre: {{usuarioPrincipal.nombre}}</p>
+    <p>Email: {{usuarioPrincipal.email}}</p>
+    <p>Biografía: {{usuarioPrincipal.datosUsuario.biografia}}</p>
+    <p>Fecha de registro: {{usuarioPrincipal.datosUsuario.fecha_registro}}</p>
+    <h2>Artículos:</h2>
+    {% for articulo in usuarioPrincipal.articulos %}
+        <h3>{{articulo.titulo}}</h3>
+    {% endfor %}
 </body>
 </html>

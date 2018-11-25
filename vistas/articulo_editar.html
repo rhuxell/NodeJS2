@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Blog</title>
+</head>
+<body>
+    <h1>Editor de artículos</h1>
+    <form action="/guardar-articulo" method="post">
+        <input name="id" type="hidden" value="{{articuloPrincipal.id}}">
+        <input name="usuario_id" type="hidden" value="{{articuloPrincipal.usuario_id}}">
+        <div>
+            Titulo: <input type="text" name="titulo" value="{{articuloPrincipal.titulo}}">
+        </div>
+        <div>
+            Contenido: <textarea name="contenido" id="" cols="30"  rows="10">{{articuloPrincipal.contenido}}</textarea>
+        </div>
+        <input type="submit" value="Enviar">
+    </form>
+</body>
+</html>

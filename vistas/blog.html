@@ -6,5 +6,19 @@
 </head>
 <body>
     <h1>Blog</h1>
+    
+    {% for articulo in articulosPrincipal %}
+        <h2>{{articulo.titulo}}</h2>
+        <p>{{articulo.contenido}}</p>
+        <p>FECHA: {{articulo.fecha_creacion}}</p>
+    {% endfor %}
+    
+    <h2>Categorías del blog:</h2>
+    <ul>
+        {% for categoria in categoriasPrincipal %}
+            <li>{{categoria.nombre}}</li>
+        {% endfor %}
+    </ul>
+    
 </body>
 </html>
