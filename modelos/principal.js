@@ -24,7 +24,28 @@ var Articulo = sequelize.define("Articulo", {
         primaryKey:true,
         type:Sequelize.INTEGER
     },
-    titulo: Sequelize.TEXT,
+    titulo:{
+        type: Sequelize.TEXT,
+        validate:{
+            len:{
+                args:[5],
+                msg: "La longitud mínima de título debe ser de 5 caracteres."
+            },
+            filtrarGroserias:function(titulo){
+                var groserias = ["puto", "culo", "pijita"];
+                var groseriasEncontradas = [];
+                
+                groserias.forEach(function(groseria){
+                    if (titulo.search(groseria) !== -1) {
+                            groseriasEncontradas.push(groseria);
+                        }
+                });
+                if (groseriasEncontradas.length > 0){
+                    throw new Error("El título no puede contener las siguientes palabras: " + groseriasEncontradas);
+                }
+            }
+        }
+    },
     contenido: Sequelize.TEXT,
     fecha_creacion: Sequelize.DATE
 },{
@@ -91,7 +112,8 @@ Usuario.hasMany(Articulo,{
 
 Articulo.hasMany(Comentario,{
     foreignKey:"articulo_id",
-    as: "comentarios"
+    as: "comentarios",
+    onDelete: 'CASCADE'
 });
 
 Articulo.belongsTo(Usuario,{
@@ -104,13 +126,15 @@ Articulo.belongsTo(Usuario,{
 Articulo.belongsToMany(Categoria,{
     foreignKey:"articulo_id",
     as:"categorias",
-    through:"categorias_articulos"
+    through:"categorias_articulos",
+    onDelete: 'CASCADE'
 });
 
 Categoria.belongsToMany(Articulo,{
     foreignKey:"categoria_id",
     as:"articulos",
-    through:"categorias_articulos"
+    through:"categorias_articulos",
+    onDelete: 'CASCADE'
 });
 
 //Exports

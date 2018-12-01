@@ -1,14 +1,18 @@
 var express = require("express");
 var nunjucks = require("nunjucks");
 var bodyParser = require("body-parser");
+
 var modelos = require("./modelos/principal.js");
 console.log("PRUEBA: " + modelos.PRUEBA);
+
 var app = express();
 app.use(bodyParser());
 nunjucks.configure(__dirname + "/vistas",{
     express:app
 });
+
 app.listen(8084);
+
 app.get("/articulo/:articuloId([0-9]+)", function(req, res){
     var articuloId = req.params.articuloId;
     var actualizado = req.query.actualizado;
@@ -32,6 +36,7 @@ app.get("/articulo/:articuloId([0-9]+)", function(req, res){
         });
     });
 });
+
 app.get("/blog", function(req, res){
     var vOffset = req.query.offset;
     modelos.Articulo.findAll({
@@ -47,6 +52,7 @@ app.get("/blog", function(req, res){
         });   
     });
 });
+
 app.get("/usuario", function(req, res){
     modelos.Usuario.find({
         where:{id:1},
@@ -63,9 +69,11 @@ app.get("/usuario", function(req, res){
         });
     });
 });
+
 app.get("/informes", function(req, res){
    res.send("Informes aquí.");
 });
+
 app.get("/articulo/:articuloId([0-9]+)/editar", function(req, res){
     var articuloId = req.params.articuloId;
     modelos.Articulo.findById(articuloId).then(function(articulo){
@@ -86,6 +94,10 @@ app.post("/guardar-articulo", function(req, res){
             //res.send("Se realizó la modificación correctamente.");
             var url = "/articulo/" + id + "?actualizado=true";
             res.redirect(url);
+        }).catch(function(err){
+            console.log(JSON.stringify(err));
+            var url = "/articulo/" + id + "?actualizado=false";
+            res.redirect(url);
         });
     });
 });
@@ -105,9 +117,13 @@ app.post("/crear-articulo", function(req,res){
             fecha_creacion : new Date()
         }).then(function(articuloNuevo){
             var url = "/articulo/" + articuloNuevo.null;
-            res.redirect(url);
+            res.redirect(url); 
+        }).catch(function(err){
+            console.log(JSON.stringify(err));
+            res.render("articulo_crear.html");
         });
 });
+
 
 app.get("/articulo/:articuloId([0-9]+)/eliminar", function(req,res){
     
@@ -116,34 +132,63 @@ app.get("/articulo/:articuloId([0-9]+)/eliminar", function(req,res){
     modelos.Articulo.find({
         where:{id:articuloId},
         include:[
-            {model:modelos.Comentario,
-            as:"comentarios"},
             {
-            model.modelos.Categoria;
-                as:"categorias"
+            model:modelos.Comentario,
+            as:"comentarios"
+            },
+            {
+            model:modelos.Categoria,
+            as:"categorias"
             }
         ]
     }).then(function(articulo){
-        console.log(articulo.comentarios);
+        
         if (articulo.comentarios == null){
             console.log("Comentario está vacío");
+            
+            //PREGUNTAR SI TIENE CATEGORÍAS
+            console.log("Pregunto si tiene categorias.");
+            
+            if (articulo.categorias == null) {
+                console.log("No tiene categorías. No hago nada");
+            }
+            
             articulo.destroy().then(function(){
             res.send("El artículo se ha eliminado correctamente");
             });
         }
-        //TENGO QUE IMPLEMENTAR EL BORRADO DE CATEGORÍAS
         else{
             console.log("Comentarios tiene algo");
-
+                
             articulo.comentarios.forEach(function(comentario){
                 console.log(comentario);
                 comentario.destroy().then(function(){
                     console.log("Se eliminó el comentario");
                 });
             });
+            
+            //PREGUNTAR SI TIENE CATEGORIAS
+            /*
+            console.log("Pregunto si tiene categorias.");
+            
+            if (articulo.categorias == null) {
+                console.log("No tiene categorías. No hago nada");
+            }else{
+                    articulo.categorias.forEach(function(categoria){
+                    console.log("Viendo las categorías por separado.");
+                    console.log(categoria);
+                    categoria.destroy().then(function(){
+                        console.log("Se eliminó la categoria");
+                    });
+                });
+            }
+            */
+            
             articulo.destroy().then(function(){
             res.send("El artículo se ha eliminado correctamente");
-        });
+            
+            });
+            
         }
-    })
+    }) 
 })

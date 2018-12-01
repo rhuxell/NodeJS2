@@ -8,6 +8,9 @@
     <h1>Articulo</h1>
     
     {% if actualizado != "true" %}
+        {% if actualizado == "false" %}
+            <p>El artículo no fue modificado.</p>
+        {% endif %}
     {% else %}
         <p>El artículo fue modificado correctamente.</p>
     {% endif %}
