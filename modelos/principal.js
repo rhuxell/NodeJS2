@@ -96,6 +96,13 @@ var DatosUsuario = sequelize.define("DatosUsuario",{
     tableName: "datos_usuarios"
 });
 
+var ArticuloCategoria = sequelize.define("ArticuloCategoria",{
+    categoria_id:Sequelize.INTEGER,
+    articulo_id:Sequelize.INTEGER
+},{
+    tableName: "categorias_articulos"
+});
+
 // Mapeos 1-1
 
 Usuario.hasOne(DatosUsuario,{
@@ -144,3 +151,4 @@ module.exports.Usuario = Usuario;
 module.exports.Categoria = Categoria;
 module.exports.Comentario = Comentario;
 module.exports.DatosUsuario = DatosUsuario;
+module.exports.ArticuloCategoria = ArticuloCategoria;

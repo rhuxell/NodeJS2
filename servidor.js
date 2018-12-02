@@ -1,17 +1,65 @@
 var express = require("express");
 var nunjucks = require("nunjucks");
 var bodyParser = require("body-parser");
+var expressSession = require("express-session");
+
+var sesion = expressSession({
+    secret:"sdhjksdh",
+    key:"sesionServidor",
+    resave: true,
+    saveUninitialized:true,
+    cookie:{
+        //milisegundos
+        //milisegundos*segundos*minutos*horas*dias
+        maxAge:1000*60*60*24*30
+    }
+});
 
 var modelos = require("./modelos/principal.js");
 console.log("PRUEBA: " + modelos.PRUEBA);
 
 var app = express();
+
+app.use(sesion);
+
 app.use(bodyParser());
+
 nunjucks.configure(__dirname + "/vistas",{
     express:app
 });
 
 app.listen(8084);
+
+
+function validarSesion(req,res,next){
+    console.log("Validando sesión del usuario.");
+    if (typeof req.session.usuarioLogueado == "undefined" ){
+        res.redirect("/login");
+    }
+    else{
+        next();
+    }
+}
+
+function validarUsuario(req,res,next){
+    var articuloId = req.params.articuloId;
+    
+    if(typeof articuloId == "undefined"){
+            articuloId = req.body.id;
+       }
+    
+    modelos.Articulo.find({
+        where:{id:articuloId}
+    }).then(function(articulo){
+        if (articulo.usuario_id == req.session.usuarioLogueado.id){
+                next();
+            }else{
+                res.send("No es posible modificar el articulo. No le pertenece");
+            }
+    })
+}
+
+
 
 app.get("/articulo/:articuloId([0-9]+)", function(req, res){
     var articuloId = req.params.articuloId;
@@ -53,9 +101,11 @@ app.get("/blog", function(req, res){
     });
 });
 
-app.get("/usuario", function(req, res){
+app.get("/usuario/:usuarioId([0-9]+)", function(req, res){
+    var pUsuarioId = req.params.usuarioId;
+    
     modelos.Usuario.find({
-        where:{id:1},
+        where:{id:pUsuarioId},
         include:[{
             model:modelos.Articulo,
             as: "articulos"
@@ -74,7 +124,7 @@ app.get("/informes", function(req, res){
    res.send("Informes aquí.");
 });
 
-app.get("/articulo/:articuloId([0-9]+)/editar", function(req, res){
+app.get("/articulo/:articuloId([0-9]+)/editar", validarSesion, validarUsuario, function(req, res){
     var articuloId = req.params.articuloId;
     modelos.Articulo.findById(articuloId).then(function(articulo){
         res.render("articulo_editar.html",{
@@ -82,7 +132,7 @@ app.get("/articulo/:articuloId([0-9]+)/editar", function(req, res){
         });
     });
 });
-app.post("/guardar-articulo", function(req, res){
+app.post("/guardar-articulo", validarSesion, validarUsuario, function(req, res){
     var titulo = req.body.titulo;
     var contenido = req.body.contenido;
     var usuario_id = req.body.usuario_id;
@@ -102,7 +152,7 @@ app.post("/guardar-articulo", function(req, res){
     });
 });
 
-app.get("/articulo/crear", function(req, res){
+app.get("/articulo/crear", validarSesion, function(req, res){
     res.render("articulo_crear.html");
 });
 
@@ -124,71 +174,60 @@ app.post("/crear-articulo", function(req,res){
         });
 });
 
-
-app.get("/articulo/:articuloId([0-9]+)/eliminar", function(req,res){
+app.get("/articulo/:articuloId([0-9]+)/eliminar", validarSesion, validarUsuario, function(req,res){
     
     var articuloId = req.params.articuloId;
     
     modelos.Articulo.find({
-        where:{id:articuloId},
-        include:[
-            {
-            model:modelos.Comentario,
-            as:"comentarios"
-            },
-            {
-            model:modelos.Categoria,
-            as:"categorias"
-            }
-        ]
+        where:{id:articuloId}
     }).then(function(articulo){
-        
-        if (articulo.comentarios == null){
-            console.log("Comentario está vacío");
             
-            //PREGUNTAR SI TIENE CATEGORÍAS
-            console.log("Pregunto si tiene categorias.");
-            
-            if (articulo.categorias == null) {
-                console.log("No tiene categorías. No hago nada");
-            }
-            
-            articulo.destroy().then(function(){
-            res.send("El artículo se ha eliminado correctamente");
-            });
-        }
-        else{
-            console.log("Comentarios tiene algo");
-                
-            articulo.comentarios.forEach(function(comentario){
-                console.log(comentario);
-                comentario.destroy().then(function(){
-                    console.log("Se eliminó el comentario");
-                });
-            });
-            
-            //PREGUNTAR SI TIENE CATEGORIAS
-            /*
-            console.log("Pregunto si tiene categorias.");
-            
-            if (articulo.categorias == null) {
-                console.log("No tiene categorías. No hago nada");
-            }else{
-                    articulo.categorias.forEach(function(categoria){
-                    console.log("Viendo las categorías por separado.");
-                    console.log(categoria);
-                    categoria.destroy().then(function(){
-                        console.log("Se eliminó la categoria");
+            if (articulo == null){
+                    res.send("No existe el articulo.");
+                }else{
+                    modelos.Comentario.destroy({
+                    where:{articulo_id:articuloId}
                     });
-                });
-            }
-            */
-            
-            articulo.destroy().then(function(){
-            res.send("El artículo se ha eliminado correctamente");
-            
-            });
-            
+                    modelos.ArticuloCategoria.destroy({
+                        where:{articulo_id:articuloId}
+                    });
+                    articulo.destroy().then(function(){
+                    res.send("El artículo se ha eliminado correctamente");
+                    });
+                }
         }
-    }) 
+    )
 })
+
+
+app.get("/login",function(req, res){
+    res.render("login.html");
+});
+
+app.post("/autentificar", function(req, res){
+    var pEmail = req.body.email;
+    var pPassword = req.body.password;
+    
+    modelos.Usuario.find({
+        where:{
+            email:pEmail,
+            password:pPassword 
+        }
+    }).then(function(usuario){
+        if(usuario == null){
+            res.send("No existe usuario.");
+        }else{
+            req.session.usuarioLogueado = {
+                id:usuario.id,
+                email:usuario.email
+            };
+            
+            res.send("usuario logueado");
+            
+            /*
+            var url = "/usuario/" + usuario.id;
+            res.redirect(url);
+            */
+        }
+    });
+});
